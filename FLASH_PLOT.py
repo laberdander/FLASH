@@ -17,10 +17,12 @@ class FlashPlot2D:
         'tele_scale': k_b,
         'nele_label': 'test',
         'nele_scale': 1,
-        'nele_numdens': 'ye  ',
+        'nele_numdens': 'ye',
         'nion_label': 'test',
         'nion_scale': 1,
-        'nion_numdens': 'sumy'
+        'nion_numdens': 'sumy',
+        'ye_scale': 1,
+        'ye_label': 'test'
     }
 
     def __init__(self, path, time=None, scale=10):
@@ -89,7 +91,7 @@ class FlashPlot2D:
         :return: yt.data_objects; slice ray, still contains all plot variables
         """
         ds = self.ds
-        ray_unsrtd = ds.ray([r_slice/self.r_max, 0, 0], [r_slice/self.r_max, 1, 0])
+        ray_unsrtd = ds.ray([r_slice/float(self.r_max), 0, 0], [r_slice/float(self.r_max), 1, 0])
         return ray_unsrtd
 
     def data_2d(self, rmax=None, xmax=None):
@@ -190,6 +192,18 @@ class FlashPlot2D:
         ax.set_ylabel('length (µm)')
         return ax
 
+    @staticmethod
+    def save_plot(figure, save_path):
+        """
+        Saves figure to save_path
+
+        :param figure: matplotlib.figure;
+        :param save_path: string; Has to include either .pdf or .png or .jpg as ending
+        :return: Nothing
+        """
+        figure.savefig(save_path)
+        figure.axes.cla()
+
 
 class FlashPlot1D:
     """
@@ -248,8 +262,14 @@ class FlashPlot1D:
         :return: x, ray (both np.array); returns 1D numpy array of the given data and the corresponding x values
         """
         srt = np.argsort(ray_unsrtd['t'])
-        ray = np.array(ray_unsrtd['flash', variable][srt])*self.var_dict[variable+'_scale']
-        x = np.array(ray_unsrtd['index', 'x'][srt].in_units('um'))
+        if variable == 'nele' or variable == 'nion':
+            ray = np.array(ray_unsrtd['flash', 'dens'][srt])\
+                           * np.array(ray_unsrtd['flash', self.var_dict[variable+'_numdens']][srt])\
+                           * self.var_dict[variable + '_scale']
+            x = np.array(ray_unsrtd['index', 'x'][srt].in_units('um'))
+        else:
+            ray = np.array(ray_unsrtd['flash', variable][srt])*self.var_dict[variable+'_scale']
+            x = np.array(ray_unsrtd['index', 'x'][srt].in_units('um'))
         return x, ray
 
     def plot_1d(self, ray_unsrtd, variable, ax, xmin=0, xmax=300, **kwargs):

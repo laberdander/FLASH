@@ -1,6 +1,10 @@
 import yt
+import matplotlib
 from matplotlib import pyplot as plt
 import numpy as np
+
+yt.set_log_level('critical')
+matplotlib.use('Agg')
 
 
 class FlashPlot2D:
@@ -13,7 +17,7 @@ class FlashPlot2D:
     var_dict = {
         'dens_label': 'material density ' + r'$\left(\frac{g}{cm^3}\right)$',
         'dens_scale': 1,
-        'tele_label': 'electron temperature (eV))',
+        'tele_label': 'electron temperature (eV)',
         'tele_scale': k_b,
         'nele_label': 'test',
         'nele_scale': 1,
@@ -202,7 +206,6 @@ class FlashPlot2D:
         :return: Nothing
         """
         figure.savefig(save_path)
-        figure.axes.cla()
 
 
 class FlashPlot1D:

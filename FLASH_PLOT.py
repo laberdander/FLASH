@@ -4,7 +4,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 yt.set_log_level('critical')
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 
 
 class FlashPlot2D:
@@ -48,7 +48,9 @@ class FlashPlot2D:
         # import, if a single plotfile path is given
         if time is None:
             self.ds = yt.load(path)  # self.ds: full hdf5 dataset
+            self.r_min = self.ds.domain_left_edge.in_units('um')[0]
             self.r_max = self.ds.domain_width.in_units('um')[0]  # self.r_max: grid width in r-direction in µm
+            self.x_min = self.ds.domain_right_edge.in_units('um')[1]
             self.x_max = self.ds.domain_width.in_units('um')[1]  # self.x_max: grid width in x-direction in µm
             self.t = self.ds.current_time.in_units('ns')  # self.t: Current time step of loaded plotfile in ns
 
@@ -62,15 +64,18 @@ class FlashPlot2D:
             ts_ind = self.find_nearest(np.array(times), time)
             # load identical class parameters as above
             self.ds = self.ts[ts_ind]
-            self.r_max = self.ds.domain_width.in_units('um')[0]
-            self.x_max = self.ds.domain_width.in_units('um')[1]
+            self.r_min = self.ds.domain_left_edge.in_units('um')[0]
+            self.r_max = self.ds.domain_right_edge.in_units('um')[0]  # self.r_max: grid width in r-direction in µm
+            self.x_min = self.ds.domain_left_edge.in_units('um')[1]
+            self.x_max = self.ds.domain_right_edge.in_units('um')[1]
             self.t = self.ds.current_time.in_units('ns')
 
         self.scale = scale
-
+        self.r_width = self.r_max-self.r_min
+        self.x_width = self.x_max-self.x_min
         # Create grid of position values with same dimensions as the sampling grid
-        r = np.linspace(0, int(self.r_max), int(self.r_max * self.scale))
-        x = np.linspace(0, int(self.x_max), int(self.x_max * self.scale))
+        r = np.linspace(int(self.r_min), int(self.r_max), int(self.r_width * self.scale))
+        x = np.linspace(int(self.x_min), int(self.x_max), int(self.x_width * self.scale))
         self.grid = np.meshgrid(r, x)
 
     @staticmethod
@@ -95,24 +100,24 @@ class FlashPlot2D:
         :return: yt.data_objects; slice ray, still contains all plot variables
         """
         ds = self.ds
-        ray_unsrtd = ds.ray([r_slice/float(self.r_max), 0, 0], [r_slice/float(self.r_max), 1, 0])
+        ray_unsrtd = ds.ray([r_slice*1e-4, 0, 0], [r_slice*1e-4, 1, 0])
         return ray_unsrtd
 
-    def data_2d(self, rmax=None, xmax=None):
+    def data_2d(self, rwidth=None, xwidth=None):
         """
         Returns a grid with dimensions (xmax*self.scale, rmax*self.scale) that contains the 2D simulation results
 
-        :param rmax: float; default: self.r_max, grid sample size, no need to change parameter
-        :param xmax: float; default: self.x_max, grid sample size, no need to change parameter
+        :param rwidth: float; default: self.r_width, grid sample size, no need to change parameter
+        :param xwidth: float; default: self.x_width, grid sample size, no need to change parameter
         :return: yt.data_objects; grid with simulation data, still contains all plot variables
         """
-        if rmax is None:
-            rmax = self.r_max
-        if xmax is None:
-            xmax = self.x_max
+        if rwidth is None:
+            rwidth = self.r_width
+        if xwidth is None:
+            xwidth = self.x_width
         ds = self.ds
         slc = ds.slice(2, 0)
-        frb = slc.to_frb((rmax, 'um'), (int(xmax*self.scale), int(rmax*self.scale)), height=(xmax, 'um'))
+        frb = slc.to_frb((rwidth, 'um'), (int(xwidth*self.scale), int(rwidth*self.scale)), height=(xwidth, 'um'))
         return frb
 
     def data_numpy_1d(self, ray_unsrtd, variable):

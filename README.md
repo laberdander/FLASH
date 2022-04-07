@@ -2,7 +2,9 @@
 
 FLASH_PLOT contains all the relevant functions to get FLASH Data and to create plots.
 
-FLASH_example_pltos.py shows how to possibly use FLASH_PLOT.
+FLASH_example_plots.py shows how to possibly use FLASH_PLOT.
+
+FLASH_data_analysis.py is currently just used to play around.
 
 
 Here a few notes:

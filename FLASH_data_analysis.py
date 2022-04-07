@@ -108,29 +108,3 @@ def doit(path, file, time, guess, **kwargs):
     print(popt)
 
 
-# guess_0 = [-5, 5, -2.7, 8, 2.7]
-# doit(path2, name, 0.5, guess_0)
-# doit(path2, name, 1, guess_0)
-# plt.show()
-# plotter2d = FLASH_PLOT.FlashPlot2D(path2 + name, scale=1, time=1)
-# ray = plotter2d.data_1d(r_slice=5)
-# x, y = plotter2d.data_numpy_1d(ray, 'dens')
-# popt = fit_shock_wave(x, y, guess_0)
-# doit(path2, name, 1, guess_0)
-
-
-# x = np.linspace(-100, 100, 100)
-
-# plt.plot(x, shock_wave_function(x, *guess_0))
-# # plt.ylim(0,5)
-# # plt.plot(x, gauss(x, -15, 3))
-# # plot1d(path2, name, 'nele', time=1, slice=5)
-# # plot1d(path2, name, 'dens', time=1, slice=5)
-ax = plot1d(path3, name, 'nele', time=1, slice=0)
-ax.set_ylim(1e23, 1e24)
-ax.set_xlim(-20, 0)
-# plot2d(path2, name, 'tele', time=1, grid='cylindrical')
-# plot2d(path3, name, 'tele', time=1, xmin=-20, xmax=400, rmin=-250, rmax=250)
-plt.show()
-
-

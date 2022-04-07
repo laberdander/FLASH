@@ -2,6 +2,8 @@ import yt
 import matplotlib
 from matplotlib import pyplot as plt
 import numpy as np
+import sys
+# import scipy as sc
 
 yt.set_log_level('critical')
 # matplotlib.use('Agg')
@@ -12,6 +14,7 @@ class FlashPlot2D:
     Class handles FLASH plot files from 2D simulations.
     """
     k_b = 8.617333262 * 1e-5
+    n_a = 6.02214076 * 1e23
 
     # Dictionary that contains the information about the different plot variables
     var_dict = {
@@ -19,17 +22,19 @@ class FlashPlot2D:
         'dens_scale': 1,
         'tele_label': 'electron temperature (eV)',
         'tele_scale': k_b,
-        'nele_label': 'test',
-        'nele_scale': 1,
+        'nele_label': 'electron density ' + r'$\left(\frac{1}{cm^3}\right)$',
+        'nele_scale': n_a,
         'nele_numdens': 'ye',
         'nion_label': 'test',
-        'nion_scale': 1,
+        'nion_scale': n_a,
         'nion_numdens': 'sumy',
         'ye_scale': 1,
-        'ye_label': 'test'
+        'ye_label': 'test',
+        'cartesian_slice': 'y',
+        'cylindrical_slice': 'z',
     }
 
-    def __init__(self, path, time=None, scale=10):
+    def __init__(self, path, time=None, scale=10, grid='cartesian'):
         """
         Init command loads a single datafile and loads some information of this simulation into class variables.
 
@@ -41,6 +46,7 @@ class FlashPlot2D:
         :param scale: float; default: 10,
         scale*x_width(in µm) and scale * y_width(in µm) specifies the number of sampling
         points in x and y direction, this is only used for 2D plot data
+        :param grid: string; default: 'cartesian', data import different for different grid structures
         """
 
         self.data_path = path
@@ -74,9 +80,15 @@ class FlashPlot2D:
         self.r_width = self.r_max-self.r_min
         self.x_width = self.x_max-self.x_min
         # Create grid of position values with same dimensions as the sampling grid
+        self.grid_style = grid
         r = np.linspace(int(self.r_min), int(self.r_max), int(self.r_width * self.scale))
         x = np.linspace(int(self.x_min), int(self.x_max), int(self.x_width * self.scale))
-        self.grid = np.meshgrid(r, x)
+        if grid == 'cartesian':
+            self.grid = np.meshgrid(r, x)
+        elif grid == 'cylindrical':
+            self.grid = np.meshgrid(x, r)
+        else:
+            sys.exit('No valid grid style')
 
     @staticmethod
     def find_nearest(array, value):
@@ -100,7 +112,7 @@ class FlashPlot2D:
         :return: yt.data_objects; slice ray, still contains all plot variables
         """
         ds = self.ds
-        ray_unsrtd = ds.ray([r_slice*1e-4, 0, 0], [r_slice*1e-4, 1, 0])
+        ray_unsrtd = ds.ray([r_slice*1e-4, -1, 0], [r_slice*1e-4, 1, 0])
         return ray_unsrtd
 
     def data_2d(self, rwidth=None, xwidth=None):
@@ -117,7 +129,7 @@ class FlashPlot2D:
             xwidth = self.x_width
         ds = self.ds
         slc = ds.slice(2, 0)
-        frb = slc.to_frb((rwidth, 'um'), (int(xwidth*self.scale), int(rwidth*self.scale)), height=(xwidth, 'um'))
+        frb = slc.to_frb((rwidth, 'um'), (int(rwidth*self.scale), int(xwidth*self.scale)), height=(xwidth, 'um'))
         return frb
 
     def data_numpy_1d(self, ray_unsrtd, variable):
@@ -134,10 +146,10 @@ class FlashPlot2D:
             ray = np.array(ray_unsrtd['flash', 'dens'][srt])\
                            * np.array(ray_unsrtd['flash', self.var_dict[variable+'_numdens']][srt])\
                            * self.var_dict[variable + '_scale']
-            x = np.array(ray_unsrtd['index', 'z'][srt].in_units('um'))
+            x = np.array(ray_unsrtd['index', self.var_dict[self.grid_style+'_slice']][srt].in_units('um'))
         else:
             ray = np.array(ray_unsrtd['flash', variable][srt])*self.var_dict[variable+'_scale']
-            x = np.array(ray_unsrtd['index', 'z'][srt].in_units('um'))
+            x = np.array(ray_unsrtd['index', self.var_dict[self.grid_style+'_slice']][srt].in_units('um'))
         return x, ray
 
     def data_numpy_2d(self, frb, variable):
@@ -157,7 +169,7 @@ class FlashPlot2D:
             data = np.array(frb['flash', variable])*self.var_dict[variable+'_scale']
         return data
 
-    def plot_1d(self, ray_unsrtd, variable, ax, xmin=0, xmax=300, **kwargs):
+    def plot_1d(self, ray_unsrtd, variable, ax, **kwargs):
         """
         Plots 1D graph of given plot variable to the given axes.
 
@@ -165,29 +177,22 @@ class FlashPlot2D:
         :param variable: string; variable indicates whether to get density data('dens'),
         electron temperature data ('tele'), or others
         :param ax: matplotlib.axes.Axes; axes where the 1d graph is plotted to
-        :param xmin: float; Default: 0; Minimum x-value (in µm)
-        :param xmax: float; Default: 300; Maximum x-value (in µm)
         :param kwargs: are given to ax.plot(,**kwargs)
         :return: matplotlib.axes.Axes
         """
         x, ray = self.data_numpy_1d(ray_unsrtd, variable)
         ax.plot(x, ray, **kwargs)
-        ax.set_xlim(xmin, xmax)
         ax.set_xlabel('length (µm)')
         ax.set_ylabel(self.var_dict[variable+'_label'])
         return ax
 
-    def plot_2d(self, frb, variable, ax, rmin=0, rmax=200, xmin=0, xmax=300, **kwargs):
+    def plot_2d(self, frb, variable, ax, **kwargs):
         """
         Plots 2D colorplot of given plot variable to the given axes
         :param frb: yt.data_objects; 2D grid produced by self.data_2d
         :param variable: string; variable indicates whether to get density data('dens'),
         electron temperature data ('tele'), or others
         :param ax: ax: matplotlib.axes.Axes; axes where the 2d graph is plotted to
-        :param rmin: float; Default: 0; Minimum r value (in µm)
-        :param rmax: float; Default: 200; Maximum r value (in µm)
-        :param xmin: float; Default: 0; Minimum x value (in µm)
-        :param xmax: float; Default: 300; Maximum x value (in µm)
         :param kwargs: are given to ax.pcolormesh(,**kwargs) (for example norm=matplotlib.colors.LogNorm())
         :return: matplotlib.axes.Axes
         """
@@ -195,8 +200,6 @@ class FlashPlot2D:
         cplot = ax.pcolormesh(*self.grid, data, **kwargs)
         cbar = plt.colorbar(cplot)
         cbar.set_label(self.var_dict[variable+'_label'])
-        ax.set_xlim(rmin, rmax)
-        ax.set_ylim(xmin, xmax)
         ax.set_xlabel('length (µm)')
         ax.set_ylabel('length (µm)')
         return ax
@@ -257,7 +260,7 @@ class FlashPlot1D:
         :return: yt.data_objects; slice ray, still contains all plot variables
         """
         ds = self.ds
-        ray_unsrtd = ds.ray([0, 0, 0], [1, 0, 0])
+        ray_unsrtd = ds.ray([-1, 0, 0], [1, 0, 0])
         return ray_unsrtd
 
     def data_numpy_1d(self, ray_unsrtd, variable):
@@ -280,7 +283,7 @@ class FlashPlot1D:
             x = np.array(ray_unsrtd['index', 'x'][srt].in_units('um'))
         return x, ray
 
-    def plot_1d(self, ray_unsrtd, variable, ax, xmin=0, xmax=300, **kwargs):
+    def plot_1d(self, ray_unsrtd, variable, ax, **kwargs):
         """
         Plots 1D graph of given plot variable to the given axes.
 
@@ -295,7 +298,6 @@ class FlashPlot1D:
         """
         x, ray = self.data_numpy_1d(ray_unsrtd, variable)
         ax.plot(x, ray, **kwargs)
-        ax.set_xlim(xmin, xmax)
         ax.set_xlabel('length (µm)')
         ax.set_ylabel(self.var_dict[variable+'_label'])
         return ax

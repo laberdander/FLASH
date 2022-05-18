@@ -2,7 +2,7 @@ import sys
 import matplotlib.pyplot as plt
 import matplotlib
 import numpy as np
-import pandas as pd
+# import pandas as pd
 import scipy.constants as const
 from scipy import interpolate
 from scipy import optimize
@@ -96,11 +96,11 @@ def plot1d_from1dsim(path, file, variable, time=None, ax=None, **kwargs):
     return ax
 
 
-def import_helios(path, variable, add_x_offset=-20):
-    data = pd.read_csv(path+variable+'_1ns.ppd', header=None, delim_whitespace=True, comment='#').to_numpy()
-    x = data[:, 0] * 1e4 + add_x_offset
-    y = data[:, 1]
-    return x, y
+# def import_helios(path, variable, add_x_offset=-20):
+#     data = pd.read_csv(path+variable+'_1ns.ppd', header=None, delim_whitespace=True, comment='#').to_numpy()
+#     x = data[:, 0] * 1e4 + add_x_offset
+#     y = data[:, 1]
+#     return x, y
 
 
 def find_critical_density(plotter2d, ray, wavelength=5.27e-7):

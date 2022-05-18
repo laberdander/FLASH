@@ -210,6 +210,7 @@ path_testcase_flash_prop_6800 = '/lustre/phx/lwegert/WorkDirectory/testcase_2d_c
 path_testcase_flash_prop_6800_results = '/u/lwegert/WorkDirectory/Data_Analysis/testcase_2d_cartesian_FLASH_Prop_6800/'
 
 
+dataset_analysis(path_testcase_3720_prop_6800, path_testcase_3720_prop_6800_results)
 dataset_analysis(path_testcase_3720_flash_6800, path_testcase_3720_flash_6800_results)
 dataset_analysis(path_testcase_flash_prop_6800, path_testcase_flash_prop_6800_results)
 

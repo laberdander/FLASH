@@ -30,6 +30,10 @@ class FlashPlot2D:
         'nion_numdens': 'sumy',
         'ye_scale': 1,
         'ye_label': 'test',
+        'depo_label': 'deposited laser energy' + r'$\left(\frac{erg}{g}\right)$',
+        'depo_scale': 1,
+        'pres_label': 'pressure (Mbar)',
+        'pres_scale': 1e-12,
         'cartesian_slice': 'y',
         'cylindrical_slice': 'z',
     }
@@ -291,8 +295,6 @@ class FlashPlot1D:
         :param variable: string; variable indicates whether to get density data('dens'),
         electron temperature data ('tele'), or others
         :param ax: matplotlib.axes.Axes; axes where the 1d graph is plotted to
-        :param xmin: float; Default: 0; Minimum x-value (in µm)
-        :param xmax: float; Default: 300; Maximum x-value (in µm)
         :param kwargs: are given to ax.plot(,**kwargs)
         :return: matplotlib.axes.Axes
         """

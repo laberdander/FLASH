@@ -191,13 +191,13 @@ def dataset_analysis(path_sim_data, path_results, label='cartesian (2D)'):
     plotter2d, ray_1ns = load_flash(path_sim_data, name, time=1, slice=0, grid='cartesian')
     ax_dens = plot1d('dens', plotter2d, ray_1ns, label=label)
     analyse_shock_pos(plotter2d, ray_1ns, ax_dens)
-    plt.savefig(path_results+'dens_cart_50.png')
+    plt.savefig(path_results+'dens_cart_1D.png')
     ax_nele = plot1d('nele', plotter2d, ray_1ns, label=label)
     analyse_crit_dens(plotter2d, ray_1ns, ax_nele)
-    # plt.savefig(path_results+'nele_cart_50.png')
+    plt.savefig(path_results+'nele_cart_1D.png')
     ax_tele = plot1d('tele', plotter2d, ray_1ns, label=label)
     analyse_max_temp(plotter2d, ray_1ns, ax_tele)
-    plt.savefig(path_results+'tele_cart_50.png')
+    plt.savefig(path_results+'tele_cart_1D.png')
 
 
 path_testcase_3720_prop_6800 = '/lustre/phx/lwegert/WorkDirectory/testcase_2d_cartesian_3720_Prop_6800/'

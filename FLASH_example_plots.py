@@ -142,7 +142,7 @@ def find_shock_wave_pos(plotter2d, ray):
 def find_max_pressure(plotter2d, ray):
     x, pres = plotter2d.data_numpy_1d(ray, 'pres')
     ind_pres_max = np.argmax(pres)
-    pres_max = pres[ind_pres_max] *1e-12
+    pres_max = pres[ind_pres_max]
     x_pres_max = x[ind_pres_max]
     print('Maximum Pressure: ' + str(pres_max) + ' Mbar, at x: ' + str(x_pres_max) + ' um')
     return x_pres_max, pres_max

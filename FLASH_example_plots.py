@@ -25,7 +25,7 @@ dict = {
     'tele_ymin': 0,
     'tele_ymax': 700,
     'tele_scale': 'linear',
-    'nele_xmin': -20,
+    'nele_xmin': 0,
     'nele_xmax': 400,
     'nele_ymin': 1e18,
     'nele_ymax': 1e24,

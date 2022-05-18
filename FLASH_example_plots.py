@@ -8,9 +8,9 @@ from scipy import interpolate
 from scipy import optimize
 
 
-# sys.path.insert(0, '/lustre/phx/lwegert/Data_Analysis')
-
+sys.path.insert(0, '/lustre/phx/lwegert/Data_Analysis')
 import FLASH_PLOT
+
 
 name = 'lasslab_hdf5_plt_cnt_????'
 
@@ -103,41 +103,6 @@ def import_helios(path, variable, add_x_offset=-20):
     return x, y
 
 
-def plot_helios(variable, ax, **kwargs):
-    x, y = import_helios(path5, variable+'_1ns.ppd')
-    ax.plot(x, y, **kwargs)
-    ax.set_xlim(dict[variable + '_xmin'], dict[variable + '_xmax'])
-    ax.set_ylim(dict[variable + '_ymin'], dict[variable + '_ymax'])
-    ax.set_yscale(dict[variable + '_scale'])
-
-
-def compare_cyl2d_cart2d_1d_helios(variable):
-    ax1 = plot1d(path3, name, variable, time=1, slice=5, grid='cartesian', label='cartesian (2D)')
-    plot1d(path2, name, variable, time=1, slice=5, ax=ax1, grid='cylindrical', label='cylindrical (2D)')
-    plot1d_from1dsim(path_1D_6Groups, name, variable, time=1, ax=ax1, label='1D 6 Energy Groups')
-    plot1d_from1dsim(path_1D_50Groups, name, variable, time=1, ax=ax1, label='1D 50 Energy Groups')
-    plot_helios(variable, ax1, label='HELIOS')
-    plt.legend()
-    plt.show()
-    # plt.savefig('D:/Simulation/testcase_results/cyl_vs_cart_vs_1d_helios_'+variable+'.png')
-
-
-def compare_energy_groups(variable):
-    ax1 = plot1d_from1dsim(path_1D_6Groups, name, variable, time=1, label='6 Energy Groups')
-    plot1d_from1dsim(path_1D_50Groups, name, variable, time=1, ax=ax1, label='50 Energy Groups')
-    plt.legend()
-    plt.show()
-
-
-def compare_cyl2d_cart2d(variable):
-    ax1 = plot1d(path3, name, variable, time=1, slice=0, grid='cartesian', label='cartesian (0 µm)')
-    plot1d(path2, name, variable, time=1, slice=0, ax=ax1, grid='cylindrical', label='cylindrical (0 µm)')
-    plot1d(path3, name, variable, time=1, slice=5, ax=ax1, grid='cartesian', label='cartesian (5 µm)')
-    plot1d(path2, name, variable, time=1, slice=5, ax=ax1, grid='cylindrical', label='cylindrical (5 µm)')
-    plt.legend()
-    plt.savefig('D:/Simulation/testcase_results/cyl_vs_cart_'+variable+'_different_slices.png')
-
-
 def find_critical_density(plotter2d, ray, wavelength=5.27e-7):
     x, nele = plotter2d.data_numpy_1d(ray, 'nele')
     ang_freq = const.c / wavelength * 2*const.pi
@@ -185,20 +150,25 @@ def find_max_pressure(plotter2d, ray):
 
 def analyse_shock_pos(plotter2d, ray, ax, plot=True):
     shock_pos, dens_shock_pos, x_dens_max, dens_max = find_shock_wave_pos(plotter2d, ray)
+    x_max_pres, max_pres = find_max_pressure(plotter2d, ray)
     if plot:
         ax.hlines(dens_max, dict['dens_xmin'], x_dens_max, linestyles='dashed')
         ax.vlines(shock_pos, dict['dens_ymin'], dens_shock_pos, linestyles='dashed')
+        ax.vlines(x_max_pres, dict['dens_ymin'], dict['dens_ymax'], linestyles='dashed', colors='red')
         ax.annotate('Shock position:  ' + str(round(shock_pos, 1)) + r'$ \mu m$',
                     xy=(shock_pos, dens_shock_pos),
                     xytext=(shock_pos+0.5, 0.3))
         ax.annotate(str(round(dens_max, 2)) + ' g/cc',
                     xy=(x_dens_max, dens_max),
                     xytext=(dict['dens_xmin']+1, dens_max + (dict['dens_ymax']-dict['dens_ymin'])*0.05))
+        ax.annotate('Max Pressure:  ' + str(round(max_pres, 1)) + ' Mbar',
+                    xy=(x_max_pres, dens_max),
+                    xytext=(x_max_pres + (dict['dens_xmax']-dict['dens_xmin'])*0.05, dict['dens_ymax']-0.5)
+                    )
 
 
 def analyse_crit_dens(plotter2d, ray, ax, plot=True):
     x_crit_dens, crit_dens = find_critical_density(plotter2d, ray)
-    x_max_pres, max_pres = find_max_pressure(plotter2d, ray)
     if plot:
         ax.hlines(crit_dens, dict['nele_xmin'], x_crit_dens, linestyles='dashed')
         ax.vlines(x_crit_dens, dict['nele_ymin'], crit_dens, linestyles='dashed')
@@ -221,33 +191,50 @@ def dataset_analysis(path_sim_data, path_results, label='cartesian (2D)'):
     plotter2d, ray_1ns = load_flash(path_sim_data, name, time=1, slice=0, grid='cartesian')
     ax_dens = plot1d('dens', plotter2d, ray_1ns, label=label)
     analyse_shock_pos(plotter2d, ray_1ns, ax_dens)
-    # plt.savefig(path_results+'dens_cart_50.png')
-    # ax_nele = plot1d('nele', plotter2d, ray_1ns, label=label)
-    # analyse_crit_dens(plotter2d, ray_1ns, ax_nele)
-    # # plt.savefig(path_results+'nele_cart_50.png')
-    # ax_tele = plot1d('tele', plotter2d, ray_1ns, label=label)
-    # analyse_max_temp(plotter2d, ray_1ns, ax_tele)
-    # plt.savefig(path_results+'tele_cart_50.png')
-    plt.show()
+    plt.savefig(path_results+'dens_cart_50.png')
+    ax_nele = plot1d('nele', plotter2d, ray_1ns, label=label)
+    analyse_crit_dens(plotter2d, ray_1ns, ax_nele)
+    # plt.savefig(path_results+'nele_cart_50.png')
+    ax_tele = plot1d('tele', plotter2d, ray_1ns, label=label)
+    analyse_max_temp(plotter2d, ray_1ns, ax_tele)
+    plt.savefig(path_results+'tele_cart_50.png')
 
 
-path1 = '/lustre/phx/lwegert/WorkDirectory/2D_Test_Ref7/lasslab_hdf5_plt_cnt_????'
-path2 = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cylindrical/'
-path3 = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cartesian/'
-path_1D_6Groups = 'D:/Simulation/FLASH/1D/testcase/EnergyGroups6/'
-path_1D_50Groups = 'D:/Simulation/FLASH/1D/testcase/EnergyGroups50/'
-path5 = 'D:/Simulation/HELIOS/testcase/testcase_1d/'
+path_testcase_3720_prop_6800 = '/lustre/phx/lwegert/WorkDirectory/testcase_2d_cartesian_3720_Prop_6800/'
+path_testcase_3720_prop_6800_results = '/u/lwegert/WorkDirectory/Data_Analysis/testcase_2d_cartesian_3720_Prop_6800/'
 
+path_testcase_3720_flash_6800 = '/lustre/phx/lwegert/WorkDirectory/testcase_2d_cartesian_3720_FLASH_6800/'
+path_testcase_3720_flash_6800_results = '/u/lwegert/WorkDirectory/Data_Analysis/testcase_2d_cartesian_3720_FLASH_6800/'
 
-path_testcase_flash_prop_6800 = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cartesian_FLASH_Prop_6800/'
-path_testcase_flash_prop_6800_results = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cartesian_FLASH_Prop_6800/'
-
-path_testcase_3720_flash_6800 = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cartesian_3720_FLASH_6800/'
-path_testcase_3720_flash_6800_results = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cartesian_3720_FLASH_6800/'
-
+path_testcase_flash_prop_6800 = '/lustre/phx/lwegert/WorkDirectory/testcase_2d_cartesian_FLASH_Prop_6800/'
+path_testcase_flash_prop_6800_results = '/u/lwegert/WorkDirectory/Data_Analysis/testcase_2d_cartesian_FLASH_Prop_6800/'
 
 
 dataset_analysis(path_testcase_3720_flash_6800, path_testcase_3720_flash_6800_results)
+dataset_analysis(path_testcase_flash_prop_6800, path_testcase_flash_prop_6800_results)
+
+
+'''
+BEISPIEL: Verschiedene Code Ausführungen
+'''
+
+# path1 = '/lustre/phx/lwegert/WorkDirectory/2D_Test_Ref7/lasslab_hdf5_plt_cnt_????'
+# path2 = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cylindrical/'
+# path3 = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cartesian/'
+# path_1D_6Groups = 'D:/Simulation/FLASH/1D/testcase/EnergyGroups6/'
+# path_1D_50Groups = 'D:/Simulation/FLASH/1D/testcase/EnergyGroups50/'
+# path5 = 'D:/Simulation/HELIOS/testcase/testcase_1d/'
+#
+#
+# path_testcase_flash_prop_6800 = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cartesian_FLASH_Prop_6800/'
+# path_testcase_flash_prop_6800_results = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cartesian_FLASH_Prop_6800/'
+#
+# path_testcase_3720_flash_6800 = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cartesian_3720_FLASH_6800/'
+# path_testcase_3720_flash_6800_results = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cartesian_3720_FLASH_6800/'
+#
+#
+#
+# dataset_analysis(path_testcase_3720_flash_6800, path_testcase_3720_flash_6800_results)
 
 # plotter2d, ray = load_flash(path3, name, time=1, slice = 0, grid = 'cartesian')
 # # find_max_temp(plotter2d, ray)
@@ -260,12 +247,37 @@ dataset_analysis(path_testcase_3720_flash_6800, path_testcase_3720_flash_6800_re
 # ax.plot(x_dens, spl(x_dens))
 # plt.show()
 
-# compare_cyl2d_cart2d('nele')
-# compare_cyl2d_cart2d('dens')
-# compare_cyl2d_cart2d('tele')
 
-# compare_cyl2d_cart2d_1d_helios('nele')
-# compare_cyl2d_cart2d_1d_helios('dens')
-# compare_cyl2d_cart2d_1d_helios('tele')
+# def plot_helios(variable, ax, **kwargs):
+#     x, y = import_helios(path5, variable+'_1ns.ppd')
+#     ax.plot(x, y, **kwargs)
+#     ax.set_xlim(dict[variable + '_xmin'], dict[variable + '_xmax'])
+#     ax.set_ylim(dict[variable + '_ymin'], dict[variable + '_ymax'])
+#     ax.set_yscale(dict[variable + '_scale'])
 
-# compare_energy_groups('tele')
+
+# def compare_cyl2d_cart2d_1d_helios(variable):
+#     ax1 = plot1d(path3, name, variable, time=1, slice=5, grid='cartesian', label='cartesian (2D)')
+#     plot1d(path2, name, variable, time=1, slice=5, ax=ax1, grid='cylindrical', label='cylindrical (2D)')
+#     plot1d_from1dsim(path_1D_6Groups, name, variable, time=1, ax=ax1, label='1D 6 Energy Groups')
+#     plot1d_from1dsim(path_1D_50Groups, name, variable, time=1, ax=ax1, label='1D 50 Energy Groups')
+#     plot_helios(variable, ax1, label='HELIOS')
+#     plt.legend()
+#     plt.show()
+    # plt.savefig('D:/Simulation/testcase_results/cyl_vs_cart_vs_1d_helios_'+variable+'.png')
+
+
+# def compare_energy_groups(variable):
+#     ax1 = plot1d_from1dsim(path_1D_6Groups, name, variable, time=1, label='6 Energy Groups')
+#     plot1d_from1dsim(path_1D_50Groups, name, variable, time=1, ax=ax1, label='50 Energy Groups')
+#     plt.legend()
+#     plt.show()
+
+
+# def compare_cyl2d_cart2d(variable):
+#     ax1 = plot1d(path3, name, variable, time=1, slice=0, grid='cartesian', label='cartesian (0 µm)')
+#     plot1d(path2, name, variable, time=1, slice=0, ax=ax1, grid='cylindrical', label='cylindrical (0 µm)')
+#     plot1d(path3, name, variable, time=1, slice=5, ax=ax1, grid='cartesian', label='cartesian (5 µm)')
+#     plot1d(path2, name, variable, time=1, slice=5, ax=ax1, grid='cylindrical', label='cylindrical (5 µm)')
+#     plt.legend()
+#     plt.savefig('D:/Simulation/testcase_results/cyl_vs_cart_'+variable+'_different_slices.png')

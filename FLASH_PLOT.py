@@ -6,7 +6,7 @@ import sys
 # import scipy as sc
 
 yt.set_log_level('critical')
-# matplotlib.use('Agg')
+matplotlib.use('Agg')
 
 
 class FlashPlot2D:

@@ -45,7 +45,7 @@ class FlashPlot2D:
         'cylindrical_slice': 'z',
     }
 
-    def __init__(self, path, time=None, scale=10, grid='cartesian'):
+    def __init__(self, path, time=None, scale=10, n_x=1, n_r=1, grid='cartesian'):
         """
         Init command loads a single datafile and loads some information of this simulation into class variables.
 
@@ -57,6 +57,10 @@ class FlashPlot2D:
         :param scale: float; default: 10,
         scale*x_width(in µm) and scale * y_width(in µm) specifies the number of sampling
         points in x and y direction, this is only used for 2D plot data
+        :param n_x: int; default: 1 (will not be used if n_x = 1)
+        Number of sampling points in x direction, if not spefified, scale will be used
+        :param n_r: int; default: 1 (will not be used if n_r = 1)
+        Number of sampling points in r direction, if not spefified, scale will be used
         :param grid: string; default: 'cartesian', data import different for different grid structures
         """
 
@@ -93,25 +97,35 @@ class FlashPlot2D:
         # Create grid of position values with same dimensions as the sampling grid
         self.grid_style = grid
         print(self.grid_style)
-        r = np.linspace(int(self.r_min), int(self.r_max), int(self.r_width * self.scale))
-        x = np.linspace(int(self.x_min), int(self.x_max), int(self.x_width * self.scale))
-        if grid == 'cartesian':
-            self.grid = np.meshgrid(r, x)
-        elif grid == 'cylindrical':
-            r = np.linspace(-int(self.r_max), int(self.r_max), 2 * int(self.r_width * self.scale) - 1)
-            self.grid = np.meshgrid(r, x)
-        else:
-            sys.exit('No valid grid style')
 
-        # if grid == 'cartesian':
-        #     x = np.linspace(int(self.x_min), int(self.x_max), int(self.x_width * self.scale))
-        #     self.grid = np.meshgrid(r, x)
-        # elif grid == 'cylindrical':
-        #     x = np.linspace(-int(self.x_max), int(self.x_max), 2*int(self.x_width * self.scale)-1)
-        #     self.grid = np.meshgrid(x, r)
-        #     self.x_width = self.x_width + self.x_width
-        # else:
-        #     sys.exit('No valid grid style')
+        # Change number of sample points in cylindrical case (needs to be odd)
+        if grid == 'cylindrical' and n_r%2 == 0:
+            self.n_r = n_r +1
+        else:
+            self.n_r = n_r
+        self.n_x = n_x
+
+        # Use number of sampling points defined by scale, when n_r (and n_x) is not specified
+        if self.n_r == 1:
+            r = np.linspace(int(self.r_min), int(self.r_max), int(self.r_width * self.scale))
+            x = np.linspace(int(self.x_min), int(self.x_max), int(self.x_width * self.scale))
+            if grid == 'cartesian':
+                self.grid = np.meshgrid(r, x)
+            elif grid == 'cylindrical':
+                r = np.linspace(-int(self.r_max), int(self.r_max), 2 * int(self.r_width * self.scale) - 1)
+                self.grid = np.meshgrid(r, x)
+            else:
+                sys.exit('No valid grid style')
+        else:
+            r = np.linspace(int(self.r_min), int(self.r_max), self.n_r)
+            x = np.linspace(int(self.x_min), int(self.x_max), self.n_x)
+            if grid == 'cartesian':
+                self.grid = np.meshgrid(r, x)
+            elif grid == 'cylindrical':
+                r = np.linspace(-int(self.r_max), int(self.r_max), self.n_r)
+                self.grid = np.meshgrid(r, x)
+            else:
+                sys.exit('No valid grid style')
 
     @staticmethod
     def find_nearest(array, value):
@@ -138,27 +152,32 @@ class FlashPlot2D:
         ray_unsrtd = ds.ray([r_slice * 1e-4, -1, 0], [r_slice * 1e-4, 1, 0])
         return ray_unsrtd
 
-    def data_2d(self, rwidth=None, xwidth=None):
+    def data_2d(self):
         """
         Returns a grid with dimensions (xmax*self.scale, rmax*self.scale) that contains the 2D simulation results
 
-        :param rwidth: float; default: self.r_width, grid sample size, no need to change parameter
-        :param xwidth: float; default: self.x_width, grid sample size, no need to change parameter
         :return: yt.data_objects; grid with simulation data, still contains all plot variables
         """
-        if rwidth is None:
-            rwidth = self.r_width
-        if xwidth is None:
-            xwidth = self.x_width
+        
+        rwidth = self.r_width
+        xwidth = self.x_width
 
         ds = self.ds
         slc = ds.slice(2, 0)
-        if self.grid_style == 'cartesian':
-            frb = slc.to_frb((rwidth, 'um'), (int(rwidth * self.scale), int(xwidth * self.scale)),
-                             height=(xwidth, 'um'))
+        if self.n_r == 1:    
+            if self.grid_style == 'cartesian':
+                frb = slc.to_frb((rwidth, 'um'), (int(rwidth * self.scale), int(xwidth * self.scale)),
+                                 height=(xwidth, 'um'))
+            else:
+                frb = slc.to_frb((rwidth, 'um'), (int(xwidth * self.scale), int(rwidth * self.scale)),
+                                 height=(xwidth, 'um'))
         else:
-            frb = slc.to_frb((rwidth, 'um'), (int(xwidth * self.scale), int(rwidth * self.scale)),
-                             height=(xwidth, 'um'))
+            if self.grid_style == 'cartesian':
+                frb = slc.to_frb((rwidth, 'um'), (int(self.n_r), int(self.n_x)),
+                                 height=(xwidth, 'um'))
+            else:
+                frb = slc.to_frb((rwidth, 'um'), (int(self.n_x), int((self.n_r+1)/2)),
+                                 height=(xwidth, 'um'))
         return frb
 
     def data_numpy_1d(self, ray_unsrtd, variable):
@@ -208,10 +227,6 @@ class FlashPlot2D:
 
         if self.grid_style == 'cartesian':
             return data
-        # else:
-        #     data_mirrored = np.append(data[::-1], data[1:], axis = 0)
-        #     print('Image shape:  ' + str(np.shape(data_mirrored)))
-        #     return data_mirrored
         else:
             data_mirrored = []
             for i in data:
@@ -249,8 +264,8 @@ class FlashPlot2D:
         """
         data = self.data_numpy_2d(frb, variable)
         cplot = ax.pcolormesh(*self.grid, data, **kwargs)
-        # cbar = plt.colorbar(cplot)
-        # cbar.set_label(self.var_dict[variable+'_label'])
+        cbar = plt.colorbar(cplot)
+        cbar.set_label(self.var_dict[variable+'_label'])
         ax.set_xlabel('length (µm)')
         ax.set_ylabel('length (µm)')
         return ax, cplot

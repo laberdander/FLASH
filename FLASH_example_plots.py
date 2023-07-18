@@ -91,7 +91,7 @@ def load_flash_2d(path, file, time=None, slice=0, grid='cartesian'):
     if time is None:
         plotter2d = FLASH_PLOT.FlashPlot2D(path+file, scale=1, grid=grid)
     else:
-        plotter2d = FLASH_PLOT.FlashPlot2D(path+file, scale=1, time=time, grid=grid)
+        plotter2d = FLASH_PLOT.FlashPlot2D(path+file, scale=1, time=time, grid=grid, n_x = 100, n_r = 5)
     frb = plotter2d.data_2d()
     return plotter2d, frb
 
@@ -114,6 +114,7 @@ def plot1d(variable, plotter2d, ray, ax=None, **kwargs):
     ax.set_yscale(dict[variable+'_scale'])
     print(plotter2d.t)
     return ax
+
 
 
 def plot1d_from1dsim(path, file, variable, time=None, ax=None, **kwargs):
@@ -158,7 +159,6 @@ def find_critical_density(plotter2d, ray, wavelength=5.27e-7):
     print('Critical Density (' + str(crit_dens) + ' 1/cc) at x = ' + str(sol.root) + ' um')
     return sol.root, crit_dens
 
-
 def find_max_temp(plotter2d, ray):
     x, tele = plotter2d.data_numpy_1d(ray, 'tele')
     ind_tele_max = np.argmax(tele)
@@ -183,7 +183,6 @@ def find_shock_wave_pos(plotter2d, ray):
     print('Position of shock wave: ' + str(x_shock_pos) + ' um    (density: ' + str(dens_shock_pos) + ' g/cc)')
     print('Maximum density: ' + str(dens_max) + ' g/cc)')
     return x_shock_pos, dens_shock_pos, x_dens_max, dens_max
-
 
 def find_max_pressure(plotter2d, ray):
     x, pres = plotter2d.data_numpy_1d(ray, 'pres')
@@ -211,7 +210,6 @@ def analyse_shock_pos(plotter2d, ray, ax, plot=True):
                     xy=(x_max_pres, dens_max),
                     xytext=(x_max_pres + (dict['dens_xmax']-dict['dens_xmin'])*0.05, dict['dens_ymax']-0.5)
                     )
-
 
 def analyse_crit_dens(plotter2d, ray, ax, wavelength=5.27e-7, plot=True):
     x_crit_dens, crit_dens = find_critical_density(plotter2d, ray, wavelength=wavelength)
@@ -250,6 +248,7 @@ def dataset_analysis(path_sim_data, path_results, label='cartesian (2D)', t=1, g
     plt.savefig(path_results+str(t)+'ns_nion_1D.png')
     ax_zavg = plot1d('zavg', plotter2d, ray_1ns, label=label)
     plt.savefig(path_results+str(t)+'ns_zavg_1D.png')
+
 
 
 def ray_data(file):
@@ -347,6 +346,7 @@ def load_and_plot_2d(path_data, path_result, time, variable, grid = 'cylindrical
     plt.savefig(path_result+variable+'_2d_'+str(round(time, 1))+'ns.png')
 
 
+
 path_2D_cartesian_6groups = '/lustre/phx/lwegert/WorkDirectory/testcase_2d_cartesian_ref7/'
 path_2D_cartesian_50groups = '/lustre/phx/lwegert/WorkDirectory/testcase_2d_cartesian_50energygroups/'
 path_2D_cylindrical_6groups = '/lustre/phx/lwegert/WorkDirectory/testcase_2d_cylindrical/'
@@ -382,7 +382,10 @@ path_testcase3_3720_prop25_6800_results = '/u/lwegert/WorkDirectory/Data_Analysi
 path_LULI = '/lustre/phx/lwegert/WorkDirectory/LULI_Simulation/'
 path_LULI_results = '/u/lwegert/WorkDirectory/Data_Analysis/LULI/'
 
-load_and_plot_2d(path_LULI, path_LULI_results, 20, 'dens', grid='cylindrical')
+path_foamtube_abl = 'D:/Analysis/FLASH_Sim/PHELIX_foamtube500_25umablator/'
+path_test_cart = 'D:/Simulation/FLASH/2D/testcase/testcase_2d_cartesian_3720_Prop_6800/'
+
+load_and_plot_2d(path_test_cart, path_test_cart, 5, 'dens', grid='cartesian')
 
 
 # dataset_analysis(path_testcase2_3720_prop25_6800, path_testcase2_3720_prop25_6800_results, t=0.2, g='cylindrical')

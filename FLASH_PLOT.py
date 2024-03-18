@@ -43,6 +43,10 @@ class FlashPlot2D:
         'pres_scale': 1e-12,
         'cartesian_slice': 'y',
         'cylindrical_slice': 'z',
+        'targ_scale': 1,
+        'targ_label': 'target',
+        'cham_scale': 1,
+        'cham_label': 'chamber'
     }
 
     def __init__(self, path, time=None, scale=10, n_x=1, n_r=1, grid='cartesian'):

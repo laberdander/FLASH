@@ -118,14 +118,15 @@ class FlashPlot2D:
                 r_extended = np.linspace(-int(self.r_max), int(self.r_max), 2 * int(self.r_width * self.scale) - 1)
                 self.grid_extended = np.meshgrid(r_extended, x)
         else:
-            r = np.linspace(int(self.r_min), int(self.r_max), self.n_r)
-            x = np.linspace(int(self.x_min), int(self.x_max), self.n_x)
+            r = np.linspace(self.r_min, self.r_max, self.n_r)
+            x = np.linspace(self.x_min, self.x_max, self.n_x)
             self.grid = np.meshgrid(r, x)
             if grid == 'cylindrical':
                 r_extended = np.linspace(-int(self.r_max), int(self.r_max), self.n_r)
                 self.grid_extended = np.meshgrid(r_extended, x)
             else:
-                sys.exit('No valid grid style')
+                pass
+            # sys.exit('No valid grid style')
 
     @staticmethod
     def find_nearest(array, value):

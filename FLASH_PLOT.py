@@ -153,7 +153,7 @@ class FlashPlot2D:
         ray_unsrtd = ds.ray([r_slice * 1e-4, -1, z], [r_slice * 1e-4, 1, z])
         return ray_unsrtd
 
-    def data_2d(self):
+    def data_2d(self, z=0):
         """
         Returns a grid with dimensions (xmax*self.scale, rmax*self.scale) that contains the 2D simulation results
 
@@ -164,7 +164,7 @@ class FlashPlot2D:
         xwidth = self.x_width
 
         ds = self.ds
-        slc = ds.slice(2, 0)
+        slc = ds.slice(2, z)
         if self.n_r == 1:    
             if self.grid_style == 'cartesian':
                 frb = slc.to_frb((rwidth, 'um'), (int(rwidth * self.scale), int(xwidth * self.scale)),

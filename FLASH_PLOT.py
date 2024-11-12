@@ -141,7 +141,7 @@ class FlashPlot2D:
         idx = (np.abs(array - value)).argmin()
         return idx
 
-    def data_1d(self, r_slice=0):
+    def data_1d(self, r_slice=0, z=0):
         """
         Takes a one dimensional slice parallel to x-axis at r=r_slice
         Resolution corresponds to simulation resolution.
@@ -150,7 +150,7 @@ class FlashPlot2D:
         :return: yt.data_objects; slice ray, still contains all plot variables
         """
         ds = self.ds
-        ray_unsrtd = ds.ray([r_slice * 1e-4, -1, 0], [r_slice * 1e-4, 1, 0])
+        ray_unsrtd = ds.ray([r_slice * 1e-4, -1, z], [r_slice * 1e-4, 1, z])
         return ray_unsrtd
 
     def data_2d(self):
